@@ -1,0 +1,10 @@
+<form method="POST" action="<%- `/${blog.id}/comments` %>" enctype="multipart/form-data">
+    <div class="field">
+        <label class="label">Add Comment</label>
+        <div class="control">
+          <textarea class="textarea" name="comment" placeholder="Add Comment Here"></textarea>
+        </div>
+      </div>
+      <input name="myImage" type="file">
+    <input class="button is-primary" type="submit" value="Submit">
+</form>
