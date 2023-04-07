@@ -39,7 +39,9 @@
                     <article class="media">
                       <div class="media-left">
                         <figure class="image is-64x64">
-                          <img :src="'http://localhost:3000'+comment.file_path" alt="Image" />
+                          <img :src="comment.file_path ? 'http://localhost:3000'+comment.file_path : 
+                          'https://bulma.io/images/placeholders/640x360.png'" 
+                          >
                         </figure>
                       </div>
                       <div class="media-content">

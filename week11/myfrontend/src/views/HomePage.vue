@@ -34,7 +34,7 @@
               <div class="card-image pt-5">
                 <figure class="image">
                   <img
-                    :src="'http://localhost:3000'+blog.file_path
+                    :src="blog.file_path
                         ? 'http://localhost:3000'+blog.file_path
                         : 'https://bulma.io/images/placeholders/640x360.png'
                     "
