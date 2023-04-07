@@ -55,7 +55,7 @@ router.post("/blogs", upload.single('blog_image'), async function (req, res, nex
     if (!file) {
       const error = new Error("Please upload a file");
       error.httpStatusCode = 400;
-      return res.json(error)
+      return next(error)
     }
 
     const title = req.body.title;

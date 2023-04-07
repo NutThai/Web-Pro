@@ -33,7 +33,7 @@
           <div class="field">
             <div class="control">
               <label class="checkbox">
-                <input type="checkbox" name="pinned" v-model="pinned">
+                <input type="checkbox" name="pinned" v-model="pinned" value="1" default-checked="0">
                 Pin this blog?
               </label>
             </div>
@@ -72,7 +72,7 @@ export default {
           title: '',
           content: '',
           status: '01',
-          pinned: false,
+          pinned: null,
           file: null
       }
   },
@@ -86,7 +86,7 @@ export default {
           formData.append("title", this.title)
           formData.append("content", this.content)
           formData.append("status", this.status)
-          formData.append("pinned", this.pinned)
+          formData.append("pinned", this.pinned | 0)
           axios.post('http://localhost:3000/blogs', 
           formData, {
               headers: {
@@ -97,6 +97,7 @@ export default {
               this.$router.push({path: '/'}) // Success! -> redirect to home page
           })
           .catch(error => {
+              alert("Please upload a file")
               console.log(error.message);
           });
       }

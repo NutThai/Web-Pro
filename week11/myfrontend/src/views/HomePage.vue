@@ -59,7 +59,7 @@
                 </router-link>
                 
                 
-                  <a class="card-footer-item" @click="like(blog.id)" href="/">
+                  <a class="card-footer-item" @click="like(blog)">
                     <span class="icon-text">
                       <span class="icon">
                         <i class="far fa-heart"></i>
@@ -99,8 +99,10 @@ export default {
       });
   },
   methods:{
-    async like(id){
-      await axios.post(`http://localhost:3000/blogs/addlike/${id}`)
+    like(blog){
+      console.log(blog.like++)
+      
+      axios.post(`http://localhost:3000/blogs/addlike/${blog.id}`)
       .then(response => {
          console.log(response)
        })

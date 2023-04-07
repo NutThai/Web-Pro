@@ -139,6 +139,8 @@ export default {
       this.file = this.$refs.file.files[0];
     },
     submit() {
+      // console.log(this.blog.comments)
+      // // blog.comments.push()
       var formData = new FormData();
       formData.append("comment", this.comment);
       formData.append("myImage", this.file);
@@ -149,8 +151,8 @@ export default {
           },
         })
         .then((response) => {
-          console.log(response);
-          location.reload();
+          console.log(this.blog.comments = response.data.comments);
+          this.comment = null
         })
         .catch((error) => {
           console.log(error.message);
