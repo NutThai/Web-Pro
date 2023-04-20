@@ -48,7 +48,7 @@
       </div>
     </nav>
 
-    <router-view :key="$route.fullPath" @auth-change="onAuthChange" />
+    <router-view :key="$route.fullPath" @auth-change="onAuthChange" :user="user" />
 
   </div>
 </template>

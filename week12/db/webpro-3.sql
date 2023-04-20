@@ -114,7 +114,8 @@ INSERT INTO `users` (`id`, `username`, `password`, `first_name`, `last_name`, `e
 (1, 'admin', '$2b$05$ZuF5bL8EVjt8XgfCnWTsCeWQq0hp.UkjG3t9jf2CXC1u7RTw4zpY2', 'Admin', 'Webpro', 'admin@webpro.com', NULL, '0998887777', '2022-04-16 14:31:40'),
 (2, 'author1', '$2b$05$ZuF5bL8EVjt8XgfCnWTsCeWQq0hp.UkjG3t9jf2CXC1u7RTw4zpY2', 'Author', 'First', 'author1@webpro.com', NULL, NULL, '2022-04-16 14:31:40');
 
-
+ALTER TABLE `users` 
+ADD COLUMN `role` VARCHAR(10) NOT NULL DEFAULT 'normal' AFTER `join_date`;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

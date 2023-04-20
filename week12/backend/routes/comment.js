@@ -16,8 +16,8 @@ router.post('/:blogId/comments', isLoggedIn, async function (req, res, next) {
 
     try {
         const [rows1, fields1] = await conn.query(
-            'INSERT INTO `comments` (`blog_id`, `comment`, `like`, `comment_date`) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-            [req.params.blogId, comment, 0]
+            'INSERT INTO `comments` (`blog_id`, `comment`, `like`, `comment_date`, comment_by_id) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)',
+            [req.params.blogId, comment, 0, req.user.id]
         )
         const [rows2, fields2] = await conn.query(
             'SELECT * FROM `comments` WHERE `id` = ?',
