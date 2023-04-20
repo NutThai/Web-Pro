@@ -1,13 +1,14 @@
 const { json } = require("express");
 const express = require("express");
 const pool = require("../config");
+const { isLoggedIn } = require('../middlewares')
 
 const router = express.Router();
 
 router.get('/:blogId/comments', function (req, res, next) {
 });
 
-router.post('/:blogId/comments', async function (req, res, next) {
+router.post('/:blogId/comments', isLoggedIn, async function (req, res, next) {
     const comment = req.body.comment
 
     const conn = await pool.getConnection()
@@ -33,7 +34,7 @@ router.post('/:blogId/comments', async function (req, res, next) {
     }
 });
 
-router.put('/comments/:commentId', async function (req, res, next) {
+router.put('/comments/:commentId', isLoggedIn, async function (req, res, next) {
     try {
         const [rows1, fields1] = await pool.query(
             'UPDATE comments SET comment=? WHERE id=?', [req.body.comment, req.params.commentId]
@@ -46,7 +47,7 @@ router.put('/comments/:commentId', async function (req, res, next) {
 });
 
 // Delete comment
-router.delete('/comments/:commentId', async function (req, res, next) {
+router.delete('/comments/:commentId', isLoggedIn, async function (req, res, next) {
     try {
         const [rows1, fields1] = await pool.query(
             'DELETE FROM comments WHERE id=?', [req.params.commentId]

@@ -3,6 +3,7 @@ const path = require("path");
 const pool = require("../config");
 const fs = require("fs");
 const multer = require("multer");
+const { isLoggedIn } = require('../middlewares')
 
 router = express.Router();
 
@@ -50,10 +51,10 @@ router.put("/blogs/addlike/:id", async function (req, res, next) {
   }
 });
 
-router.post("/blogs", upload.array("myImage", 5), async function (req, res, next) {
+router.post("/blogs", isLoggedIn, upload.array("myImage", 5), async function (req, res, next) {
   const file = req.files;
   let pathArray = [];
-
+  console.log(req.user)
   if (!file) {
     return res.status(400).json({ message: "Please upload a file" });
   }
@@ -69,9 +70,9 @@ router.post("/blogs", upload.array("myImage", 5), async function (req, res, next
 
   try {
     let results = await conn.query(
-      "INSERT INTO blogs(title, content, status, pinned, `like`, create_date) " +
-      "VALUES(?, ?, ?, ?, 0, CURRENT_TIMESTAMP);",
-      [title, content, status, pinned]
+      "INSERT INTO blogs(title, content, status, pinned, `like`, create_date, create_by_id) " +
+      "VALUES(?, ?, ?, ?, 0, CURRENT_TIMESTAMP, ?);",
+      [title, content, status, pinned, req.user.id]
     );
     const blogId = results[0].insertId;
 
@@ -95,7 +96,7 @@ router.post("/blogs", upload.array("myImage", 5), async function (req, res, next
   }
 });
 
-router.get("/blogs/:id", function (req, res, next) {
+router.get("/blogs/:id", isLoggedIn, function (req, res, next) {
   // Query data from 3 tables
   const promise1 = pool.query("SELECT * FROM blogs WHERE id=?", [
     req.params.id,
@@ -125,7 +126,7 @@ router.get("/blogs/:id", function (req, res, next) {
     });
 });
 
-router.put("/blogs/:id", upload.array("myImage", 5), async function (req, res, next) {
+router.put("/blogs/:id", isLoggedIn, upload.array("myImage", 5), async function (req, res, next) {
   // Your code here
   const file = req.files;
   let pathArray = []
@@ -174,7 +175,7 @@ router.put("/blogs/:id", upload.array("myImage", 5), async function (req, res, n
   return;
 });
 
-router.delete("/blogs/:id", async function (req, res, next) {
+router.delete("/blogs/:id", isLoggedIn, async function (req, res, next) {
   // Your code here
   const conn = await pool.getConnection();
   // Begin transaction
