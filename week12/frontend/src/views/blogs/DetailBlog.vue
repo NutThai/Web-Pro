@@ -97,7 +97,7 @@
                         Like ({{comment.like}})
                       </a>
                     </div>
-                    <div class="level-right">
+                    <div class="level-right" v-if="isCommentOwner(comment)">
                       <div class="level-item">
                         <button
                           @click="editToggle = index; editCommentMessage = comment.comment"
@@ -128,7 +128,7 @@
           </div>
           <footer class="card-footer">
             <router-link class="card-footer-item" to="/">To Home Page</router-link>
-            <a class="card-footer-item" @click="deleteBlog">
+            <a v-if="isBlogOwner(blog)" class="card-footer-item" @click="deleteBlog">
               <span>Delete this blog</span>
             </a>
           </footer>
@@ -153,10 +153,21 @@ export default {
       editCommentMessage: "",
     };
   },
+  props: ['user'],
   mounted() {
     this.getBlogDetail(this.$route.params.id);
   },
   methods: {
+    isCommentOwner(commnet) {
+      if (!this.user) return
+      if(this.user.role == 'admin') return true
+      return commnet.comment_by_id === this.user.id
+    },
+    isBlogOwner(blog) {
+      if (!this.user) return 
+      if(this.user.role == 'admin') return true
+      return blog.create_by_id === this.user.id
+    },
     getBlogDetail(blogId) {
       axios
         .get(`http://localhost:3000/blogs/${blogId}`)
