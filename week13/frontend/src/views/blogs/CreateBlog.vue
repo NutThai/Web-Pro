@@ -47,6 +47,9 @@
         <div class="control">
           <textarea v-model="$v.contentBlog.$model" class="textarea" placeholder="Textarea"></textarea>
         </div>
+        <template v-if="$v.contentBlog.$error">
+          <p>ERROR</p>
+        </template>
       </div>
 
       <div class="field">
@@ -54,6 +57,9 @@
         <div class="control">
           <input class="input" type="url" v-model="$v.reference.$model" placeholder="e.g. https://www.google.com">
         </div>
+        <template v-if="$v.reference.$error">
+          <p>ERROR</p>
+        </template>
       </div>
 
       <div class="control mb-3">
@@ -65,12 +71,15 @@
           <input v-model="$v.statusBlog.$model" type="radio" name="answer" value="status_public" />
           Public
         </label>
+        <template v-if="$v.statusBlog.$error">
+          <p>ERROR</p>
+        </template>
       </div>
 
       <div class="field">
         <div class="control">
           <label class="checkbox">
-            <input v-model="$v.pinnedBlog.$model" type="checkbox" />
+            <input v-model="pinnedBlog" type="checkbox" />
             Pinned
           </label>
         </div>
@@ -111,7 +120,10 @@
 
 <script>
 import axios from "axios";
-import { required, alpha, url, between, minLength, maxLength, sameAs } from 'vuelidate/lib/validators'
+import { required, alpha, url, or, between, minLength, maxLength, sameAs } from 'vuelidate/lib/validators'
+function statusBlog(value) {
+    return (value == 'status_private' || value == 'status_public')
+}
 
 export default {
   data() {
@@ -135,17 +147,17 @@ export default {
       minLength: minLength(10),
       maxLength: maxLength(25)
     },
-    // contentBlog: {
-    //   required,
-    //   minLength: minLength(50),
-    // },
-    // statusBlog: {
-    //   between: between('status_private','status_public'),
+    contentBlog: {
+      required,
+      minLength: minLength(50),
+    },
+    statusBlog: {
+      statusBlog: statusBlog
 
-    // },
-    // reference: {
-    //   url
-    // }
+    },
+    reference: {
+      url
+    }
   },
   methods: {
     selectImages(event) {
