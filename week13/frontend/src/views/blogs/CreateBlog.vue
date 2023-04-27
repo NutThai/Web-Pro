@@ -17,8 +17,8 @@
     <section class="px-6">
       <input class="mb-5" multiple type="file" accept="image/png, image/jpeg, image/webp" @change="selectImages" />
 
-      <div v-if="images" class="columns is-multiline">
-        <div v-for="(image, index) in images" :key="image.id" class="column is-one-quarter">
+      <div v-if="$v.images.$model" class="columns is-multiline">
+        <div v-for="(image, index) in $v.images.$model" :key="image.id" class="column is-one-quarter">
           <div class="card">
             <div class="card-image">
               <figure class="image is-4by3">
@@ -28,9 +28,13 @@
             <footer class="card-footer">
               <a @click="deleteSelectImage(index)" class="card-footer-item has-text-danger">Delete</a>
             </footer>
+
           </div>
         </div>
       </div>
+      <template v-if="$v.images.$error">
+        <p>ERROR</p>
+      </template>
 
       <div class="field mt-5">
         <label class="label">Title</label>
@@ -92,17 +96,23 @@
           <div class="field">
             <label class="label">วันที่โพสต์</label>
             <div class="control">
-              <input class="input" type="date" v-model="start_date">
+              <input class="input" type="date" v-model="$v.start_date.$model">
             </div>
           </div>
+          <template v-if="$v.start_date.$error">
+            <p>ERROR</p>
+          </template>
         </div>
         <div class="column">
           <div class="field">
             <label class="label">วันสิ้นสุดโพสต์</label>
             <div class="control">
-              <input class="input" type="date" v-model="end_date">
+              <input class="input" type="date" v-model="$v.end_date.$model">
             </div>
           </div>
+          <template v-if="$v.end_date.$error">
+            <p>ERROR</p>
+          </template>
         </div>
       </div>
 
@@ -120,10 +130,24 @@
 
 <script>
 import axios from "axios";
-import { required, alpha, url, or, between, minLength, maxLength, sameAs } from 'vuelidate/lib/validators'
+import { required, alpha, url, or, maxValue, between, minLength, maxLength, sameAs, size } from 'vuelidate/lib/validators'
 function statusBlog(value) {
-    return (value == 'status_private' || value == 'status_public')
+  return (value == 'status_private' || value == 'status_public')
 }
+function isSelect() {
+  return (this.start_date && this.end_date)
+}
+function dateCheck() {
+  return this.start_date < this.end_date
+}
+const fileSize = (value) => {
+  value.forEach(x => {
+    return (x.size < 10);
+  })
+
+}
+
+
 
 export default {
   data() {
@@ -157,8 +181,20 @@ export default {
     },
     reference: {
       url
+    },
+    start_date: {
+      isSelect
+    },
+    end_date: {
+      isSelect,
+      dateCheck
+    },
+    images: {
+      fileSize:fileSize
     }
+
   },
+
   methods: {
     selectImages(event) {
       this.images = event.target.files;
