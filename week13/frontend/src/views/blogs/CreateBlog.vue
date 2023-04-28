@@ -17,8 +17,8 @@
     <section class="px-6">
       <input class="mb-5" multiple type="file" accept="image/png, image/jpeg, image/webp" @change="selectImages" />
 
-      <div v-if="$v.images.$model" class="columns is-multiline">
-        <div v-for="(image, index) in $v.images.$model" :key="image.id" class="column is-one-quarter">
+      <div v-if="images" class="columns is-multiline">
+        <div v-for="(image, index) in images" :key="image.id" class="column is-one-quarter">
           <div class="card">
             <div class="card-image">
               <figure class="image is-4by3">
@@ -32,8 +32,10 @@
           </div>
         </div>
       </div>
-      <template v-if="$v.images.$error">
-        <p>ERROR</p>
+
+      <template v-if="$v.imagesSize.$error">
+        <p class="help is-danger" v-if="!$v.imagesSize.sumSize">file upload is not more than 1MB</p>
+        <p class="help is-danger" v-if="!$v.imagesSize.haveImg">please upload files </p>
       </template>
 
       <div class="field mt-5">
@@ -42,7 +44,10 @@
           <input v-model="$v.titleBlog.$model" class="input" type="text" placeholder="Text input" />
         </div>
         <template v-if="$v.titleBlog.$error">
-          <p>ERROR</p>
+          <p class="help is-danger" v-if="!$v.titleBlog.required">req</p>
+          <p class="help is-danger" v-if="!$v.titleBlog.alpha">alpha</p>
+          <p class="help is-danger" v-if="!$v.titleBlog.minLength">min</p>
+          <p class="help is-danger" v-if="!$v.titleBlog.maxLength">max</p>
         </template>
       </div>
 
@@ -52,7 +57,8 @@
           <textarea v-model="$v.contentBlog.$model" class="textarea" placeholder="Textarea"></textarea>
         </div>
         <template v-if="$v.contentBlog.$error">
-          <p>ERROR</p>
+          <p class="help is-danger" v-if="!$v.contentBlog.required">req</p>
+          <p class="help is-danger" v-if="!$v.contentBlog.minLength">min </p>
         </template>
       </div>
 
@@ -62,7 +68,7 @@
           <input class="input" type="url" v-model="$v.reference.$model" placeholder="e.g. https://www.google.com">
         </div>
         <template v-if="$v.reference.$error">
-          <p>ERROR</p>
+          <p class="help is-danger" v-if="!$v.reference.url">url</p>
         </template>
       </div>
 
@@ -76,7 +82,8 @@
           Public
         </label>
         <template v-if="$v.statusBlog.$error">
-          <p>ERROR</p>
+          <p class="help is-danger" v-if="!$v.imagesSize.sumSize">file upload is not more than 1MB</p>
+          <p class="help is-danger" v-if="!$v.imagesSize.haveImg">please upload files </p>
         </template>
       </div>
 
@@ -100,7 +107,7 @@
             </div>
           </div>
           <template v-if="$v.start_date.$error">
-            <p>ERROR</p>
+            <p class="help is-danger" v-if="!$v.start_date.isSelect">select end</p>
           </template>
         </div>
         <div class="column">
@@ -111,7 +118,8 @@
             </div>
           </div>
           <template v-if="$v.end_date.$error">
-            <p>ERROR</p>
+            <p class="help is-danger" v-if="!$v.start_date.isSelect">select start</p>
+            <p class="help is-danger" v-if="!$v.start_date.dateCheck">lower than start</p>
           </template>
         </div>
       </div>
@@ -135,16 +143,16 @@ function statusBlog(value) {
   return (value == 'status_private' || value == 'status_public')
 }
 function isSelect() {
-  return (this.start_date && this.end_date)
+  return (this.start_date && this.end_date) || (!this.start_date && !this.end_date)
 }
 function dateCheck() {
-  return this.start_date < this.end_date
+  return this.start_date < this.end_date || (!this.start_date && !this.end_date)
 }
-const fileSize = (value) => {
-  value.forEach(x => {
-    return (x.size < 10);
-  })
-
+function sumSize(value) {
+  return (value < 1048576)
+}
+function haveImg(value) {
+  return (value > 0)
 }
 
 
@@ -161,7 +169,9 @@ export default {
       statusBlog: "status_public",
       reference: "",
       start_date: "",
-      end_date: ""
+      end_date: "",
+      imagesSize: 0,
+      imgSize: 0
     };
   },
   validations: {
@@ -189,56 +199,66 @@ export default {
       isSelect,
       dateCheck
     },
-    images: {
-      fileSize:fileSize
+    imagesSize: {
+      sumSize,
+      haveImg
     }
 
   },
 
   methods: {
     selectImages(event) {
+      this.imagesSize = 0
       this.images = event.target.files;
+      this.images.forEach(x => this.imagesSize += x.size)
+      this.$v.imagesSize.$touch()
     },
     showSelectImage(image) {
       // for preview only
       return URL.createObjectURL(image);
     },
-    deleteSelectImage(index) {
+    deleteSelectImage(index, image) {
       console.log(this.images);
       this.images = Array.from(this.images);
       this.images.splice(index, 1);
+      this.imagesSize -= image.size
+      this.$v.imagesSize.$touch()
     },
     submitBlog() {
-      let formData = new FormData();
-      formData.append("title", this.titleBlog);
-      formData.append("content", this.contentBlog);
-      formData.append("pinned", this.pinnedBlog ? 1 : 0);
-      // formData.append("reference", this.reference);
-      // formData.append("start_date", this.start_date);
-      // formData.append("end_date", this.end_date);
-      formData.append("status", this.statusBlog);
-      this.images.forEach((image) => {
-        formData.append("myImage", image);
-      });
+      this.$v.$touch();
+      this.$v.imagesSize.$touch()
+      if (!this.$v.$invalid) {
+        let formData = new FormData();
+        formData.append("title", this.titleBlog);
+        formData.append("content", this.contentBlog);
+        formData.append("pinned", this.pinnedBlog ? 1 : 0);
+        // formData.append("reference", this.reference);
+        // formData.append("start_date", this.start_date);
+        // formData.append("end_date", this.end_date);
+        formData.append("status", this.statusBlog);
+        this.images.forEach((image) => {
+          formData.append("myImage", image);
+        });
 
-      // Note ***************
-      // ตอนเรายิง Postmant จะใช้ fromData
-      // ตอนยิงหลาย ๆ รูปพร้อมกันใน Postman จะเป็นแบบนี้
+        // Note ***************
+        // ตอนเรายิง Postmant จะใช้ fromData
+        // ตอนยิงหลาย ๆ รูปพร้อมกันใน Postman จะเป็นแบบนี้
 
-      // title   | "This is a title of blog"
-      // comment | "comment in blog"
-      // ...
-      // myImage | [select file 1]
-      // myImage | [select file 2]
-      // myImage | [select file 3]
+        // title   | "This is a title of blog"
+        // comment | "comment in blog"
+        // ...
+        // myImage | [select file 1]
+        // myImage | [select file 2]
+        // myImage | [select file 3]
 
-      // จะสังเกตุว่าใช้ myImage เป็น key เดียวกัน เลยต้องเอามา loop forEach
-      // พอไปฝั่ง backend มันจะจัด file ให้เป็น Array เพื่อเอาไปใช้งานต่อได้
+        // จะสังเกตุว่าใช้ myImage เป็น key เดียวกัน เลยต้องเอามา loop forEach
+        // พอไปฝั่ง backend มันจะจัด file ให้เป็น Array เพื่อเอาไปใช้งานต่อได้
 
-      axios
-        .post("http://localhost:3000/blogs", formData)
-        .then((res) => this.$router.push({ name: 'home' }))
-        .catch((e) => console.log(e.response.data));
+        axios
+          .post("http://localhost:3000/blogs", formData)
+          .then((res) => this.$router.push({ name: 'home' }))
+          .catch((e) => console.log(e.response.data));
+      }
     },
   },
 };

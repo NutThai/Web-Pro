@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const pool = require("../config");
 const fs = require("fs");
+const Joi = require("joi");
 
 router = express.Router();
 
@@ -19,7 +20,7 @@ var storage = multer.diskStorage({
     );
   },
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 1000000 } });
 
 // Like blog that id = blogId
 router.put("/blogs/addlike/:blogId", async function (req, res, next) {
@@ -52,31 +53,53 @@ router.put("/blogs/addlike/:blogId", async function (req, res, next) {
   }
 });
 
+const blogFormat = Joi.object({
+  title: Joi.string().required().min(10).max(25).pattern(/^[a-z]+$/),
+  content: Joi.string().required().min(50),
+  pinned: Joi.string().required(),
+  status: Joi.string().valid('status_private', 'status_public').required(),
+  reference: Joi.string().uri().optional(),
+  start_date: Joi.date().optional().max(Joi.ref('end_date')),
+  end_date: Joi.date().optional(),
+}).custom((value) => {
+  if (value.end_date && !value.start_date) {
+    throw new Joi.ValidationError("you want to fill in start_date")
+  }
+  return value
+})
+
 router.post(
   "/blogs",
-  upload.array("myImage", 5),
+  upload.array("myImage",5),
   async function (req, res, next) {
+    try {
+      await blogFormat.validateAsync(req.body, { abortEarly: false })
+    } catch (error) {
+      return res.status(400).json(error.toString())
+    }
     if (req.method == "POST") {
       const file = req.files;
       let pathArray = [];
-
-      if (!file) {
-        return res.status(400).json({ message: "Please upload a file" });
+      if (file.length === 0) {
+        console.log(file)
+        return res.status(400).send("Please upload a file" );
       }
 
       const title = req.body.title;
       const content = req.body.content;
-      const status = req.body.status;
+      const status = req.body.status == "status_public"? "01" : "02";
       const pinned = req.body.pinned;
-
+      const start_date = req.body.start_date | ""
+      const end_date = req.body.end_date
+      const reference = req.body.reference
       const conn = await pool.getConnection();
       // Begin transaction
       await conn.beginTransaction();
 
       try {
         let results = await conn.query(
-          "INSERT INTO blogs(title, content, status, pinned, `like`,create_date) VALUES(?, ?, ?, ?, 0,CURRENT_TIMESTAMP);",
-          [title, content, status, pinned]
+          "INSERT INTO blogs(title, content, status, pinned, `like`,create_date, start_date, end_date, reference) VALUES(?, ?, ?, ?, 0,CURRENT_TIMESTAMP, ?, ?, ?);",
+          [title, content, status, pinned, start_date, end_date, reference]
         );
         const blogId = results[0].insertId;
 
@@ -94,7 +117,7 @@ router.post(
         res.send("success!");
       } catch (err) {
         await conn.rollback();
-        return res.status(400).json(err);
+        return res.status(400).json(err.toString());
       } finally {
         console.log("finally");
         conn.release();
